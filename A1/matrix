@@ -1,0 +1,304 @@
+#!/bin/bash
+
+
+#dimensions
+dims () {
+	total=0 #total is total elements in matrix
+	y=0 #number of rows
+	datafilepath="datafile$$"
+
+	#error handling for more than 2 arguments
+	if [ "$#" -gt 1 ];
+	then
+	     echo "Too many arguments" >&2
+	     exit 1
+		fi
+
+	if [ "$#" -eq 1 ] #execute if there is a single argument
+	then
+			cat $1 > "$datafilepath"
+			while read line
+			do
+				((y++))
+				for i in $line
+				do
+						((total++))
+				done
+			done < $datafilepath
+			echo -e "$y $((total/y))" #print out dimensions "y x"
+
+	else
+		cat $2 > "$datafilepath" #redirecting stdin to this file
+		while read line
+		do
+			((y++))
+			for i in $line
+			do
+					((total++))
+			done
+		done < $datafilepath
+		echo -e "$y $((total/y))" #print out dimensions "y x"
+	fi
+
+
+rm -f "$datafilepath"
+}
+
+
+transpose () {
+	temp1="temp1"
+	output="output"
+if [[ ! -r $1 ]] #checks to see if file is readable
+	then
+		echo "unreadable" 1>&2
+		exit 1
+	else
+		count=1
+		read singlelinevar < "$1"
+		for i in $singlelinevar
+		do
+			cut -f $count $1 | tr '\n' '\t' >> "$temp1" #cut out first field
+			echo >> "$temp1"
+			((count=count+1)) #increments count to cut out next field
+		done
+	#remove trailing tab
+	while read line
+	do
+		echo -e "$line" >> output
+	done < $temp1
+	cat output
+
+
+	fi
+#remove tempfiles
+	rm -f "$temp1"
+	rm -f "output"
+}
+
+mean () {
+ temp="tempfile"
+ out="out"
+ output="output"
+ count=1
+ sum=0
+ counter=0
+ rows=0
+ a="adfa"
+ read singlelinevar < "$1" #used to find number of element in single line
+
+#finding number of rows
+ while read line
+ do
+ 	((rows++))
+ done < $1
+
+
+for i in $singlelinevar
+do
+	cut -f $count $1 > $temp
+	((count=count+1))
+	sum=0
+ while read num
+ do
+	 sum=`expr $sum + $num` #finds sum of the column
+ done < $temp
+		sum=$(((sum + (rows/2)*( (sum>0)*2-1 )) / rows)) #find the mean with proper rounding
+		echo $sum >> $out
+done
+	cat $out | tr '\n' '\t' > "$output$$" #translate newspace to tabs
+	echo >> "$output$$" # add newspace
+
+	#remove trailing tabs
+	output1="output1"
+	while read line
+	do
+		echo -e "$line" >> output1
+	done < $output$$
+	cat output1
+
+#remove tempfiles
+rm -f "$out"
+rm -f "output1"
+rm -f "$output$$"
+rm -f "$a"
+rm -f "$temp"
+}
+
+add () {
+	total1=0
+	total2=0
+	row1=0
+	row2=0
+	col1=0
+	col2=0
+	#get dims of first matrix
+	while read line
+	do
+		((col1++))
+		#echo $line
+		for i in $line
+		do
+				((total1++))
+		done
+	done < $1
+	row1=$((total1/col1))
+
+	#getting dims of second matrix
+	while read line
+	do
+		((col2++))
+		#echo $line
+		for i in $line
+		do
+				((total2++))
+		done
+	done < $2
+	row2=$((total2/col2))
+
+	#erorr handling for matrices of different dimensions
+	if [ ! $col1 -eq $col2 ] && [ ! $row1 -eq $row2 ];
+	then
+		echo "mismatched matrices" >&2
+		exit 1
+	fi
+	#error handling for less than 1 and more than 2 arguments
+	if [ "$#" -gt 2 ] || [ "$#" -lt 1 ];
+	then
+	     echo "incorrect number of arguments" >&2
+	     exit 1
+	fi
+
+temp1="fad"
+output="output"
+output2='adsf'
+myvar=0
+tempcol="dasf"
+
+		while read num1 <&2 && read num2 <&3
+		do
+			#put the first line of the two matrices in one tempfile
+			echo $num1 > temp1
+			echo $num2 >> temp1
+			read singlelinevar < "$1"
+			count=1
+			for i in $singlelinevar
+			do
+					cut -d " " -f $count <temp1 > $tempcol
+					((count=count+1))
+					sum=0
+					while read num
+					do
+						sum=` expr $sum + $num `
+					done < $tempcol
+					echo $sum >> $output #store in file
+			done
+		done 2< $1 3< $2
+		cat output
+		rm -f "$output"
+
+}
+
+multiply()
+{
+	total1=0
+	total2=0
+	row1=0
+	row2=0
+	col1=0
+	col2=0
+
+#getting dims of first matrix
+		while read line
+		do
+			((col1++))
+			#echo $line
+			for i in $line
+			do
+					((total1++))
+			done
+		done < $1
+		row1=$((total1/col1))
+
+		x_dim1=$row1 #x dim of first matrix
+    y_dim1=$col1 #y dim of first matrix
+
+#getting dims of second matrix
+	while read line
+	do
+		a1=0
+		a2=0
+		row1=0
+		xcol=0
+
+			((col2++))
+			#echo $line
+			for i in $line
+			do
+					((total2++))
+			done
+		done < $2
+		row2=$((total2/col2))
+		x_dim2=$row2 #x dim of second matrix
+		y_dim2=$col2 #y dim of second matrix
+
+	if [ ! $x_dim1 -eq $y_dim2 ] #check to see if row1 and col2 match
+	then
+		echo "mismatched matrices" >&2
+		exit 1
+	fi
+
+    # add matrices in arrays
+    while read line
+    do
+        for i in $line
+        do
+            a1+=($i)
+        done
+    done < $1
+
+    while read line
+    do
+        for i in $line
+        do
+            a2+=($i)
+        done
+    done < $2
+
+		#beginning of loop
+    while read line
+    do
+        pcol=0
+        while [ $pcol -lt $x_dim2 ]
+        do
+            total=0
+            prow=0
+            sum=0
+            while [ $total -lt $x_dim1 ]
+            do
+                l=${a1[$x_dim1 * $row1 + $prow + 1 ]} #left
+                r=${a2[$x_dim2 * $total + $pcol + 1]} #right
+                sum=$((sum + l * r)) #summing up the product of the elements
+								((prow=prow+1)) #index of row
+								((total=total+1)) #index of col
+            done
+            ((pcol=pcol+1))
+            ((xcol=xcol+1))
+            if [ $xcol -lt $x_dim2 ]
+            then
+                printf "%s\t" $sum
+            else
+                printf "%s" $sum
+                echo #add row
+                xcol=0 #reset
+            fi
+        done
+            ((row1++))
+    done < $1
+
+
+}
+
+rm -f d2*
+rm -f datafile*
+
+"$@"
